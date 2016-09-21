@@ -41,9 +41,7 @@ const fetchUser = function (userId) {
 
 
 // ----- Reducers for handling actions above and updating store -----
-const initialState = {isFetching: false,
-    'name': undefined,
-    'login': undefined}
+const initialState = {isFetching: false}
 function userApp(state = initialState, action) {
     switch (action.type) {
         case REQUEST_USER:
@@ -56,7 +54,7 @@ function userApp(state = initialState, action) {
             return Object.assign({}, state, {
                 isFetching: false,
                 name: json.name,
-                login: json.login
+                avatar_url: json.avatar_url
             })
         default:
             return state
@@ -81,11 +79,12 @@ const App = React.createClass({
     render() {
         return (
             <div>
-                <h1>React Router Tutorial</h1>
+                <h1>React Router with Redux & Async</h1>
                 <ul role="nav">
                     <li><Link to="/" onlyActiveOnIndex>Home</Link></li>
-                    <li><Link to="/users/will-moore">Will</Link></li>
-                    <li><Link to="/users/jburel">Jean Marie</Link></li>
+                    <li><Link to="/users/will-moore">will-moore</Link></li>
+                    <li><Link to="/users/jburel">jburel</Link></li>
+                    <li><Link to="/users/aleksandra-tarkowska">aleksandra-tarkowska</Link></li>
                 </ul>
                 {this.props.children}
             </div>
@@ -116,12 +115,13 @@ const User = React.createClass({
             this.props.fetchUser(nextProps.userId)
         }
     },
-
     render() {
         return (
             <div>
                 <h2>{this.props.userId}</h2>
-                <p>{this.props.name}</p>
+                {this.props.isFetching ? 'fetching...' : ''}
+                <p>Name: {this.props.name}</p>
+                <img style={{width: 100, height: 100}} src={ this.props.avatar_url } />
             </div>
         )
     }
@@ -133,26 +133,21 @@ const User = React.createClass({
 // props of child component <User>
 const mapStateToProps = (state, ownProps) => {
     return {
-        userId: ownProps.params.userId,    // pass userId down from router
+        // UserContainer is child of <Route> with param :userId
+        // Pass userId to User component, so it can fetchUser(id)
+        userId: ownProps.params.userId,
+        // User also displays other data from the store
         name: state.name,
-        login: state.login
-    }
-}
-// Define functions that modify store and are
-// passed as props of User component so that it
-// can update store
-const mapDispatchToProps = (dispatch, ownProps) => {
-    return {
-        fetchUser: (userId) => {
-            dispatch(fetchUser(userId))
-        },
+        avatar_url: state.avatar_url,
+        isFetching: state.isFetching
     }
 }
 // Create the UserContainer to wrap User component
 // with the map functions above
 const UserContainer = connect(
     mapStateToProps,
-    mapDispatchToProps
+    // Instead of mapDispatchToProps, fetchUser(id) calls dispatch(fetchUser(id))
+    {fetchUser: fetchUser}
 )(User)
 
 
